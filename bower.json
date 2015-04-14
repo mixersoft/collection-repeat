@@ -1,0 +1,11 @@
+{
+  "name": "collection-repeat",
+  "private": "false",
+  "devDependencies": {
+    "ionic": "driftyco/ionic-bower#1.0.0-rc.3"
+  },
+  "dependencies": {
+    "ngCordova": "~0.1.14-alpha",
+    "lodash": "~3.6.0"
+  }
+}
