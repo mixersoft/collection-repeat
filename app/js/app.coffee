@@ -78,6 +78,15 @@ angular
       }
     })
 
+    .state('app.camera-roll', {
+      url: "/camera-roll",
+      views: {
+        'menuContent': {
+          templateUrl: "/partials/gallery.html"
+          controller: 'CameraRollGalleryCtrl'
+        }
+      }
+    })
     # // if none of the above states are matched, use this as the fallback
     $urlRouterProvider.otherwise('/app/dynamic-h');
 ]
