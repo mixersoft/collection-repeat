@@ -21,3 +21,18 @@ $ionicons-font-path: "../lib/ionic/fonts" !default;
 // Include all of Ionic
 @import "www/lib/ionic/scss/ionic";
 
+
+ion-content {
+  background-color: $dark;
+}
+
+.card-wrap {
+  .card {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    .card-footer .tab-item {
+      font-size: 1.5em;
+    }
+  }
+}
+

@@ -58,8 +58,8 @@ angular
       controller: 'AppCtrl'
     })
 
-    .state('app.simple', {
-      url: "/simple",
+    .state('app.static-h', {
+      url: "/static-h",
       views: {
         'menuContent': {
           templateUrl: "/partials/simple.html"
@@ -68,8 +68,8 @@ angular
       }
     })
 
-    .state('app.gallery', {
-      url: "/gallery",
+    .state('app.dynamic-h', {
+      url: "/dynamic-h",
       views: {
         'menuContent': {
           templateUrl: "/partials/gallery.html"
@@ -79,7 +79,7 @@ angular
     })
 
     # // if none of the above states are matched, use this as the fallback
-    $urlRouterProvider.otherwise('/app/simple');
+    $urlRouterProvider.otherwise('/app/dynamic-h');
 ]
 
 .controller 'AppCtrl', [
