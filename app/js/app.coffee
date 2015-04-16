@@ -13,15 +13,20 @@ angular
   'ionic',
   # 'ngCordova',
   'partials'
+  'plugin.cameraRoll'
 ])
+
+
+.value '$platform', {}
+
 .config ['$ionicConfigProvider', 
   ($ionicConfigProvider)->
     return
 ]
 .run [
-  '$ionicPlatform'
-  ($ionicPlatform)->
-    window.$platform = {}
+  '$ionicPlatform', '$platform'
+  ($ionicPlatform, $platform)->
+    window.$platform = $platform
 
     $ionicPlatform.ready ()->
       # Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
@@ -30,7 +35,7 @@ angular
       # org.apache.cordova.statusbar required
       StatusBar.styleDefault() if window.StatusBar?
       # platform
-      _.extend window.$platform, _.defaults ionic.Platform.device(), {
+      _.extend $platform, _.defaults ionic.Platform.device(), {
           available: false
           cordova: false
           platform: 'browser'
@@ -38,10 +43,9 @@ angular
           isDevice: ionic.Platform.isWebView()
           isBrowser: ionic.Platform.isWebView() == false
         }
-      if $platform.cordova
-        angular.noop()
-
+      $platform.id = $platform.uuid
       console.log '$platform', $platform
+
     return
 ]
 .config [
@@ -80,13 +84,23 @@ angular
 
     .state('app.camera-roll', {
       url: "/camera-roll",
+      abstract: true
       views: {
         'menuContent': {
-          templateUrl: "/partials/gallery.html"
+          templateUrl: "/partials/camera-roll-gallery.html"
           controller: 'CameraRollGalleryCtrl'
         }
       }
     })
+
+    .state('app.camera-roll.small', {
+      url: "/small"
+    })
+
+    .state('app.camera-roll.preview', {
+      url: "/preview"
+    })
+
     # // if none of the above states are matched, use this as the fallback
     $urlRouterProvider.otherwise('/app/dynamic-h');
 ]

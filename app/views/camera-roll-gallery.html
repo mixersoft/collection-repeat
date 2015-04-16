@@ -1,0 +1,37 @@
+<ion-view view-title="CameraRoll {{watch.size}}">
+  <ion-content delegate-handle="collection-repeat-wrap" class="has-header">
+    <div collection-repeat="item in watch.items track by UUID"
+    item-height="watch.getHeight($index)"
+    item-width="100%"
+    item-render-buffer="3"
+    force-refresh-images="true"
+    >
+      <div class="card-wrap">
+        <div class="card camera-roll">
+          <div class="item item-divider item-stable, padding-horizontal card-header">
+            <div class="caption capitalize">
+              {{(item.dateTaken | date:'MM/dd/yyyy @ h:mma')}} [H={{item.scaledH}}] {{item.UUID}}
+            </div>
+          </div>
+          <div class="item item-image">
+            <div class="photo-wrap">
+              <img 
+              ng-src="{{ item.srcSize[watch.size] }}" 
+              ng-class="item.isLoading ? 'xxxinvisible' : '' "
+              height="{{item.scaledH}}">
+              <ion-spinner 
+              class="spinner-dark" 
+              ng-show="item.isLoading"
+              ></ion-spinner>
+            </div>
+          </div>
+          <div class="item item-balanced tabs card-footer">
+            <div class="tab-item icon ion-heart"></div>
+            <div class="tab-item icon ion-ios-upload-outline"></div>
+            <div class="tab-item icon ion-ios-compose"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ion-content>
+</ion-view>
