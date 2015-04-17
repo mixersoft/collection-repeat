@@ -16,7 +16,7 @@
           <div class="item item-image">
             <div class="photo-wrap">
               <img 
-              ng-src="{{ item.src }}" 
+              ng-src="{{ watch.fetchSrc(item, $index) }}" 
               ng-class="item.isLoading ? 'invisible' : '' "
               height="{{item.scaledH}}">
               <ion-spinner 

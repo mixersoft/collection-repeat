@@ -46,15 +46,16 @@ angular
           targetType = 'FILE_URI'
         if `targetType==CAMERA.DestinationType.DATA_URL`
           targetType = 'DATA_URL'
-        return cache[targetType][targetWidth] || null
+        return cache[targetType][targetWidth]?[UUID] || null
       set: (UUID, targetWidth, targetType, value)->
         if `targetType==CAMERA.DestinationType.FILE_URI`
           targetType = 'FILE_URI'
         if `targetType==CAMERA.DestinationType.DATA_URL`
           targetType = 'DATA_URL'
         cache[targetType][targetWidth] = {} if !cache[targetType][targetWidth]  
-        return cache[targetType][targetWidth] = value
+        return cache[targetType][targetWidth][UUID] = value
     }
+    window._imgCache = cache
     return self
 ]
 
@@ -259,74 +260,6 @@ angular
 
 
 
-
-
-
-      ### #########################################################################
-      # methods for getting photos from cameraRoll, isDevice==true
-      ### #########################################################################  
-
-      ### called by: 
-          directive:lazySrc AFTER imgCacheSvc.isStashed_P().catch
-          otgParse.uploadPhotoFileP
-          otgUploader.uploader.type = 'parse'
-          NOTE: use getPhoto_P() for noCache = true, i.e. fetch but do NOT cache
-      ###
-      ###
-      # @params UUID, string, iOS example: '1E7C61AB-466A-468A-A7D5-E4A526CCC012/L0/001'
-      # @params options object
-      #   size: ['thumbnail', 'preview', 'previewHD']
-      #   DestinationType : [0,1],  default CAMERA.DestinationType.FILE_URI 
-      #   noCache: boolean, default false, i.e. cache the photo using imageCacheSvc.stashFile
-      # @return photo object, {UUID: data: dataSize:, ...}
-      # @throw error if photo.dataSize == 0
-      ###
-      XXXgetPhoto_P :  (UUID, options)->
-        options = _.defaults options || {}, {
-          size: 'preview'
-          noCache : false
-          DestinationType : CAMERA.DestinationType.FILE_URI 
-        }
-
-        if getFromCache = options.noCache == false # check imageCacheSvc
-          found = self.getPhoto(UUID, options) 
-        if isBrowser = $platform.isBrowser 
-          found = self.getPhoto(UUID, options) 
-        if isWorkorder = $rootScope.isStateWorkorder() 
-          # HACK: for now, force workorders to get parse URLS, skip cameraRoll
-          # TODO: check cameraRoll if owner is DIY workorder
-          # i.e. workorderObj.get('devices').indexOf($platform.id) > -1
-          found = self.getPhoto(UUID, options) 
-        if found  
-          photo = {
-            UUID: UUID
-            data: found
-          }
-          return $q.when(found) 
-          
-
-        # load from cameraRoll if workorderObj.get('devices').indexOf($platform.id) > -1
-        if isDevice = !isBrowser 
-          return pluginCameraRoll.getDataURLForAssets_P( 
-            [UUID], 
-            options, 
-            null  # TODO: how should we merge for owner TopPicks?
-          ).then (photos)->
-              photo = photos[0]   # resolve( photo )
-              if photo.dataSize == 0
-                return $q.reject {
-                  message: "error: dataSize==0"
-                  UUID: UUID
-                  size: options.size
-                }
-              return photo
-        else 
-          return $q.reject {
-            message: 'ERROR: getPhoto_P()'
-          }
-
-
-
       ### getPhoto if cached, otherwise queue for retrieval, 
           SAVE TO CACHE with imgCacheSvc or cameraRoll.dataURL
         called by: 
@@ -370,6 +303,10 @@ angular
 
       # called by cameraRoll.queuePhoto()
       fetchPhotosFromQueue : ()->
+        if self.isFetching
+          console.log 'fetching from CameraRoll...'
+          return $q.when('fetching from CameraRoll...') 
+
         queuedAssets = self.queue()
 
         chunks = _.reduce queuedAssets, (result, o)->
@@ -390,6 +327,8 @@ angular
           }
           if isNaN(size) == false
             options['targetWidth'] = options['targetHeight'] = parseInt size
+
+          self.isFetching = true
           promises.push pluginCameraRoll.getDataURLForAssetsByChunks_P(
               assets
               , options
@@ -399,14 +338,18 @@ angular
                 throw "Error: cameraRoll item not found in map" if !found
                 found.isLoading = false 
                 found.src = src # update(!) photo.src
-                console.log "cameraRoll loaded, src="+src[-50...]
+                if /^data:image/.test(src)
+                  console.log "cameraRoll DATA_URL="+src[0...10]+'...'+src[10000...10040]
+                else 
+                  console.log "cameraRoll FILE_URI=..."+src[-50...]
                 return 
             ).then (photos)->
               return photos 
 
         return $q.all(promises).then (o)->
-            # console.log "*** fetchPhotosFromQueueP $q All Done! \n" 
-            return
+          self.isFetching = false
+          # console.log "*** fetchPhotosFromQueueP $q All Done! \n" 
+          return
 
       debounced_fetchPhotosFromQueue : ()->
         return console.log "\n\n\n ***** Placeholder: add debounce on init *********"
@@ -418,7 +361,7 @@ angular
 
 
       # getter, or reset queue
-      queue: (clear, LIMIT = 50 )->
+      queue: (clear, LIMIT = 10 )->
         self._queue = {} if clear=='clear'
         queued = _.values self._queue
         remainder = queued[LIMIT..]

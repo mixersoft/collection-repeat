@@ -74,16 +74,17 @@ angular.module('starter')
         cardPaddingV = 2 * 5
         h = scaledH + headerH + footerH + cardPaddingV  # 372 px
         console.log "collection-repeat, getHeight() index=%d, height=%d", i, h
-        this.fetchSrc(i)
         return h
-      fetchSrc: (i)->
-        return 0 if _.isEmpty(this.items) || i >= this.items.length
-        
-        photo = this.items[i]
+      fetchSrc: (photo, $index)->
         src = imageCacheSvc.get(photo.UUID, $scope.watch.targetWidth, $scope.watch.targetType)
         if src
+          console.log "cameraRoll, using cached photo, index=%d", $index
           photo.isLoading = false
           return photo.src = src 
+
+        return if photo.isLoading == true  
+        photo.isLoading = true   
+        console.log "fetchSrc, i=%d, UUID=%s", $index, photo.UUID
 
         # load from plugin.cameraRoll
         options = {}
@@ -97,9 +98,8 @@ angular.module('starter')
         else
           options['size'] = options['targetWidth'] = options['targetHeight'] = parseInt $scope.watch.targetWidth
 
-        photo.isLoading = true
         cameraRoll.getPhoto( photo.UUID, options)
-        return 
+        return photo.src = null
     }
 
     $scope.on = {
