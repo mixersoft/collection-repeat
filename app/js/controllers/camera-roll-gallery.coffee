@@ -21,16 +21,33 @@ angular.module('starter')
   '$state', 
   'cameraRoll'
   'PLUGIN_CAMERA_CONSTANTS'
-  ($scope, $rootScope, $timeout, $ionicPlatform, $ionicScrollDelegate, $state, cameraRoll, CAMERA)->
+  'imageCacheSvc'
+  ($scope, $rootScope, $timeout, $ionicPlatform, $ionicScrollDelegate, $state, cameraRoll, CAMERA, imageCacheSvc)->
 
     LIMIT = 100
-    SIZE = 'small'
+
+    TARGET_WIDTH = 320
+    TARGET_TYPE = 'FILE_URI'
+
+    defaults = {
+      'iPhone': 
+        targetWidth: 320
+        targetHeight: 320  
+        autoRotate: true       
+      'iPhone6@2x': 
+        targetWidth: 750
+        targetHeight: 750
+        autoRotate: true
+      'iPhone6plus2@x': 
+        targetWidth: 1080
+        targetHeight: 1080
+        autoRotate: true
+    }
 
     $scope.$on '$stateChangeSuccess', (event, toState, toParams, fromState, fromParams, error)->
-      if $state.includes('app.camera-roll.small')
-        $scope.watch.size = 'small'
-      if $state.includes('app.camera-roll.preview')
-        $scope.watch.size = 'preview'        
+      if $state.includes('app.camera-roll')
+        $scope.watch.targetWidth = toParams.size
+        $scope.watch.targetType = toParams.type     
       return 
 
     $scope.$on '$ionicView.loaded', ()->
@@ -45,7 +62,8 @@ angular.module('starter')
     $scope.watch = {
       $platform : $platform
       items: []
-      size: null
+      targetWidth: null
+      targetType: null # [FILE_URI | DATA_URL]
       getHeight: (i)->
         return 0 if _.isEmpty(this.items) || i >= this.items.length
         photo = this.items[i]
@@ -58,16 +76,27 @@ angular.module('starter')
         console.log "collection-repeat, getHeight() index=%d, height=%d", i, h
         this.fetchSrc(i)
         return h
-      fetchSrc: (i, type="FILE_URI")->
+      fetchSrc: (i)->
         return 0 if _.isEmpty(this.items) || i >= this.items.length
         
         photo = this.items[i]
-        return photo.srcSize[$scope.watch.size] if photo.srcSize?[$scope.watch.size]?
+        src = imageCacheSvc.get(photo.UUID, $scope.watch.targetWidth, $scope.watch.targetType)
+        if src
+          photo.isLoading = false
+          return photo.src = src 
+
         # load from plugin.cameraRoll
-        options = {
-          size: $scope.watch.size || SIZE
-          DestinationType: CAMERA.DestinationType[type]
-        }
+        options = {}
+        if isNaN($scope.watch.targetType)
+          options['DestinationType'] = CAMERA.DestinationType[$scope.watch.targetType]
+        else 
+          options['DestinationType'] = $scope.watch.targetType
+
+        if isNaN($scope.watch.targetWidth)
+          options['size'] = $scope.watch.targetWidth
+        else
+          options['size'] = options['targetWidth'] = options['targetHeight'] = parseInt $scope.watch.targetWidth
+
         photo.isLoading = true
         cameraRoll.getPhoto( photo.UUID, options)
         return 
@@ -106,10 +135,10 @@ angular.module('starter')
           "originalHeight":3264,"originalWidth":2448,"dateTaken":"2014-10-11T18:46:53+03:00","from":"CameraRoll",
           "src": null
           "isLoading": true
-          "srcSize":{}
         }] 
         $scope.$broadcast 'collection-repeat.changed', testData
       else 
+        $scope.watch.items = cameraRoll.map()[(-1*LIMIT)...] 
         $ionicScrollDelegate.$getByHandle('collection-repeat-wrap').resize()
 
     $ionicPlatform.ready ()->

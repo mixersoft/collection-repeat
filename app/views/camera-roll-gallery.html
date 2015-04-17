@@ -1,4 +1,4 @@
-<ion-view view-title="CameraRoll {{watch.size}}">
+<ion-view view-title="CameraRoll {{watch.targetWidth}}px">
   <ion-content delegate-handle="collection-repeat-wrap" class="has-header">
     <div collection-repeat="item in watch.items track by UUID"
     item-height="watch.getHeight($index)"
@@ -16,8 +16,8 @@
           <div class="item item-image">
             <div class="photo-wrap">
               <img 
-              ng-src="{{ item.srcSize[watch.size] }}" 
-              ng-class="item.isLoading ? 'xxxinvisible' : '' "
+              ng-src="{{ item.src }}" 
+              ng-class="item.isLoading ? 'invisible' : '' "
               height="{{item.scaledH}}">
               <ion-spinner 
               class="spinner-dark" 
@@ -25,7 +25,9 @@
               ></ion-spinner>
             </div>
           </div>
-          <div class="item item-balanced tabs card-footer">
+          <div class="item tabs card-footer"
+          ng-class="{'item-calm':watch.targetType=='FILE_URI',
+          'item-royal':watch.targetType=='DATA_URL'}">
             <div class="tab-item icon ion-heart"></div>
             <div class="tab-item icon ion-ios-upload-outline"></div>
             <div class="tab-item icon ion-ios-compose"></div>

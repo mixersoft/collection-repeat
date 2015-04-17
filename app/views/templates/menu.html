@@ -24,11 +24,17 @@
         <ion-item nav-clear menu-close ui-sref="app.dynamic-h">
           dynamic-H
         </ion-item>
-        <ion-item nav-clear menu-close ui-sref="app.camera-roll.small">
-          dyn-H CameraRoll 320W
+        <ion-item nav-clear menu-close ui-sref="app.camera-roll({size:320, type:'FILE_URI'})">
+          CameraRoll 320px
         </ion-item>
-        <ion-item nav-clear menu-close ui-sref="app.camera-roll.preview">
-          dyn-H CameraRoll 720W
+        <ion-item nav-clear menu-close ui-sref="app.camera-roll({size:750, type:'FILE_URI'})">
+          CameraRoll 750px
+        </ion-item>
+        <ion-item nav-clear menu-close ui-sref="app.camera-roll({size:320, type:'DATA_URL'})">
+          CameraRoll 320px DataURL
+        </ion-item>
+        <ion-item nav-clear menu-close ui-sref="app.camera-roll({size:750, type:'DATA_URL'})">
+          CameraRoll 750px DataURL
         </ion-item>
       </ion-list>
     </ion-content>

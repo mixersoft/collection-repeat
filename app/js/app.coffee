@@ -83,8 +83,7 @@ angular
     })
 
     .state('app.camera-roll', {
-      url: "/camera-roll",
-      abstract: true
+      url: "/camera-roll/:size/:type",
       views: {
         'menuContent': {
           templateUrl: "/partials/camera-roll-gallery.html"
@@ -93,13 +92,7 @@ angular
       }
     })
 
-    .state('app.camera-roll.small', {
-      url: "/small"
-    })
 
-    .state('app.camera-roll.preview', {
-      url: "/preview"
-    })
 
     # // if none of the above states are matched, use this as the fallback
     $urlRouterProvider.otherwise('/app/dynamic-h');

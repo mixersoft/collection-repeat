@@ -34,9 +34,29 @@ angular
     ARROW_ANY: 15
 }
 
-.value 'imageCacheSvc', {
-  empty: true
-}
+.factory 'imageCacheSvc', [ 'PLUGIN_CAMERA_CONSTANTS'
+  (CAMERA)->
+    cache = {
+      'FILE_URI': {}
+      'DATA_URL': {}
+    }
+    self = {
+      get: (UUID, targetWidth, targetType)->
+        if `targetType==CAMERA.DestinationType.FILE_URI`
+          targetType = 'FILE_URI'
+        if `targetType==CAMERA.DestinationType.DATA_URL`
+          targetType = 'DATA_URL'
+        return cache[targetType][targetWidth] || null
+      set: (UUID, targetWidth, targetType, value)->
+        if `targetType==CAMERA.DestinationType.FILE_URI`
+          targetType = 'FILE_URI'
+        if `targetType==CAMERA.DestinationType.DATA_URL`
+          targetType = 'DATA_URL'
+        cache[targetType][targetWidth] = {} if !cache[targetType][targetWidth]  
+        return cache[targetType][targetWidth] = value
+    }
+    return self
+]
 
 .factory 'cameraRoll', [
   '$q', '$timeout', '$rootScope', 
@@ -178,8 +198,8 @@ angular
         }
         # check against imageCacheSvc
         notCached = _.filter favorites, (photo)->
-            return false if imageCacheSvc.isStashed( photo.UUID, options.size ) 
-            return false if self.dataURLs[options.size][photo.UUID]?
+            return false if !imageCacheSvc.get( photo.UUID, options.size, 'FILE_URI' ) 
+            return false if !imageCacheSvc.get( photo.UUID, options.size, 'DATA_URL' )
             return true
         # console.log "\n\n\n*** preloading favorite previews for UUIDs, count=" + notCached.length 
         # console.log notCached
@@ -200,7 +220,7 @@ angular
               # , null  # onEach, called for cameraRoll thumbnails and favorites
               , (photo)->
                 if options.DestinationType == CAMERA.DestinationType.FILE_URI 
-                  imageCacheSvc.stashFile(photo.UUID, options.size, photo.data, photo.dataSize) # FILE_URI
+                  imageCacheSvc.set(photo.UUID, options.size, options.DestinationType, photo.data) # FILE_URI
               , pluginCameraRoll.SERIES_DELAY_MS 
             )
             .then ()->
@@ -220,29 +240,6 @@ angular
       isDataURL : (src)->
         throw "isDataURL() ERROR: expecting string" if typeof src != 'string'
         return /^data:image/.test( src )
-
-      ## @param options = {UUID: data: or dataURL:}
-      ## options.data, options.dataURL:
-      ##    dataURL from cameraRoll.addDataURL(),
-      ##    fileURL from imageCacheSvc.cordovaFile_USE_CACHED_P, or 
-      ##    PARSE URL from workorders
-      addDataURL: (size, options)->
-        # console.log "\n\n adding for size=" + size
-        if !/preview|thumbnail/.test( size )
-          return console.warn "ERROR: invalid dataURL size, size=" + size
-        _logOnce "sdkhda", "WARNING: NOT truncating to UUID(36), UUID="+options.UUID if options.UUID.length > 36
-
-        imgSrc = options.data || options.dataURL
-        self.dataURLs[size][options.UUID] = imgSrc
-
-        if self.isDataURL(imgSrc) # cacheDataURLs
-          $timeout ()->
-              promise = imageCacheSvc.cordovaFile_CACHE_P( options.UUID, size, imgSrc).then (fileURL)->
-                # console.log "\n\n imageCacheSvc has cached dataURL, path=" + fileURL
-                self.dataURLs[size][options.UUID] = fileURL
-            , 10 
-        # console.log "\n\n added!! ************* " 
-        return self
 
 
       getDateFromLocalTime : (dateTaken)->
@@ -284,7 +281,7 @@ angular
       # @return photo object, {UUID: data: dataSize:, ...}
       # @throw error if photo.dataSize == 0
       ###
-      getPhoto_P :  (UUID, options)->
+      XXXgetPhoto_P :  (UUID, options)->
         options = _.defaults options || {}, {
           size: 'preview'
           noCache : false
@@ -339,13 +336,9 @@ angular
       ###
       # @params UUID, string, iOS example: '1E7C61AB-466A-468A-A7D5-E4A526CCC012/L0/001'
       # @params options object
-      #   size: ['thumbnail', 'preview', 'previewHD', 'orig'], default options.size=='preview'
+      #   size: targetWidth or ['thumbnail', 'preview', 'previewHD', 'orig'], default options.size=='preview'
       #   DestinationType : [0,1],  default CAMERA.DestinationType.FILE_URI       
-      # @return found object { UUID: data: dataSize: }
-      #    dataURL from cameraRoll.dataURls,
-      #    fileURL from imageCacheSvc.cordovaFile_USE_CACHED_P, or 
-      #      pluginCameraRoll.getPhotoForAssets_P([UUID], options.DestinationType=1)
-      #    NOTE: PARSE FILE_URI from workorders, photo.src is set directly by directive:lazySrc
+      # @return src String, either FILE_URI or DATA_URL
       ###
       getPhoto: (UUID, options)->
         options = _.defaults options || {}, {
@@ -353,35 +346,10 @@ angular
           DestinationType : CAMERA.DestinationType.FILE_URI 
           # noCache : false     # FORCE cache via queue
         }
-        size = options.size
-        if !/small|preview|thumbnail/.test size
-          throw "ERROR: invalid dataURL size, size=" + size
-        
-        if options.DestinationType == CAMERA.DestinationType.FILE_URI
-          # stashed = imageCacheSvc.isStashed(UUID, size)
-          # if stashed
-          #   found = {
-          #     data: stashed.fileURL
-          #     dataSize: stashed.fileSize
-          #   }
-          'skip'
-        else 
-          dataURL = self.dataURLs[size][UUID]
-          if !dataURL && UUID.length == 36
-            dataURL = _.find self.dataURLs[size], (o,key)->
-                return o if key[0...36] == UUID
-          if dataURL
-            found = {
-              data: dataURL
-              dataSize: dataURL.length
-            }
-        if found # add extended attributes
-          _.defaults found, options
-          found['UUID'] = UUID
-          return found
+        found = src = imageCacheSvc.get(UUID, options.size, options.DestinationType)
+        return src if found
 
         # still not found, add to queue for fetch
-          # console.log "image not cached, queuePhoto(UUID)=" + UUID
         self.queuePhoto(UUID, options)
         return null
 
@@ -397,7 +365,6 @@ angular
         self._queue[UUID] = item
         # # don't wait for promise
         self.debounced_fetchPhotosFromQueue()
-        # $rootScope.$broadcast 'cameraRoll.queuedPhoto'
         return
 
 
@@ -407,18 +374,10 @@ angular
 
         chunks = _.reduce queuedAssets, (result, o)->
             type = o.size + ':' + o.DestinationType
-            result[type].push o.UUID
+            result[type] = [] if !result[type]
+            result[type].push o.UUID 
             return result
-          , {
-            'thumbnail:1': [] # Camera.DestinationType.FILE_URI ==1
-            'small:1': []
-            'preview:1': []
-            'previewHD:1': []
-            'thumbnail:0': [] # DATA_URL == 0
-            'small:0': []
-            'preview:0': []
-            'previewHD:0': []            
-          }
+          , {}
 
         promises = []
         _.each chunks, (assets, type)->
@@ -429,28 +388,19 @@ angular
             size: size
             DestinationType: parseInt(DestinationType)
           }
+          if isNaN(size) == false
+            options['targetWidth'] = options['targetHeight'] = parseInt size
           promises.push pluginCameraRoll.getDataURLForAssetsByChunks_P(
               assets
               , options
               , (photo)->
-
-                if options.DestinationType == CAMERA.DestinationType.FILE_URI 
-                  # imageCacheSvc.stashFile(photo.UUID, options.size, photo.data, photo.dataSize) # FILE_URI
-                  found = _.find self._mapAssetsLibrary, {UUID: photo.UUID}
-                  throw "Error: cameraRoll item not found in map" if !found
-                  found.srcSize = {} if !found.srcSize?
-                  found.srcSize[options.size] = photo.data
-                  found.src = photo.data
-                  found.size = photo.dataSize
-                else if options.DestinationType == CAMERA.DestinationType.DATA_URL 
-                  self.dataURLs[options.size][photo.UUID] = photo.data
-                  found = _.find self._mapAssetsLibrary, {UUID: photo.UUID}
-                  throw "Error: cameraRoll item not found in map" if !found
-                  found.srcSize = {} if !found.srcSize?
-                  found.src = photo.data
-                  found.size = photo.data.length
-                console.log "cameraRoll loaded, src="+photo.data[-50...]
-                found.isLoading = false
+                src = imageCacheSvc.set(photo.UUID, options.size, options.DestinationType, photo.data)
+                found = _.find self._mapAssetsLibrary, {UUID: photo.UUID}
+                throw "Error: cameraRoll item not found in map" if !found
+                found.isLoading = false 
+                found.src = src # update(!) photo.src
+                console.log "cameraRoll loaded, src="+src[-50...]
+                return 
             ).then (photos)->
               return photos 
 
@@ -467,23 +417,15 @@ angular
       ### #########################################################################
 
 
-
       # getter, or reset queue
-      queue: (clear, PREVIEW_LIMIT = 50 )->
+      queue: (clear, LIMIT = 50 )->
         self._queue = {} if clear=='clear'
+        queued = _.values self._queue
+        remainder = queued[LIMIT..]
 
-        smallOnes = _.reject self._queue, {size: 'preview'}
-        previews = _.filter self._queue, {size: 'preview'}
-
-        if previews.length > PREVIEW_LIMIT
-          remainder = previews[PREVIEW_LIMIT..]
-
-        batch = smallOnes.concat previews.slice(0, PREVIEW_LIMIT)
+        batch = queued.slice(0, LIMIT)
         self._queue = if remainder?.length then _.indexBy( remainder, 'UUID') else {}
-
-        # order by smallOnes then previews
         return batch
-
 
 
       # IMAGE_WIDTH should be computedWidth - 2 for borders
@@ -664,32 +606,26 @@ angular
         options.size = options.size || 'thumbnail'
 
         defaults = {
-          small: 
+          'small': 
             targetWidth: 320
             targetHeight: 320
-            resizeMode: 'aspectFit'
-            autoRotate: true
-            DestinationType: CAMERA.DestinationType.FILE_URI  # 1          
-          preview: 
+          'preview': 
             targetWidth: 720
             targetHeight: 720
-            resizeMode: 'aspectFit'
-            autoRotate: true
-            DestinationType: CAMERA.DestinationType.FILE_URI  # 1
-          previewHD: 
+          'previewHD': 
             targetWidth: 1080
             targetHeight: 1080
-            resizeMode: 'aspectFit'
-            autoRotate: true
-            DestinationType: CAMERA.DestinationType.FILE_URI  # 1
-          thumbnail:
+          'thumbnail':
+            resizeMode: 'aspectFill'
             targetWidth: 64
             targetHeight: 64
-            resizeMode: 'aspectFill'
-            autoRotate: true
-            DestinationType: CAMERA.DestinationType.FILE_URI  # 1
         }
-        _.defaults options, defaults[options.size]
+
+        _.defaults options, defaults[options.size], {
+            resizeMode: 'aspectFit'
+            autoRotate: true
+            DestinationType: CAMERA.DestinationType.FILE_URI  # 1  
+          }
 
         assets = [assets] if !_.isArray(assets)
         assetIds = assets
