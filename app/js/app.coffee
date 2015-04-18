@@ -98,6 +98,37 @@ angular
     $urlRouterProvider.otherwise('/app/dynamic-h');
 ]
 
+.directive 'onPhotoLoad', ['$parse' , ($parse)->
+  spinnerMarkup = '<i class="icon ion-load-c ion-spin light"></i>'
+  _handleLoad = (ev, photo, index)->
+    $elem = angular.element(ev.currentTarget)
+    $elem.removeClass('loading')
+    $elem.next().addClass('hide')
+    fn = $parse(attrs.onPhotoLoad)
+    scope.$apply ()->
+      fn scope, {$event: ev}
+      return
+    return
+
+  return {
+    restrict: 'A'
+    link: (scope, $elem, attrs)->
+      
+
+      # NOTE: using collection-repeat="item in items"
+      attrs.$observe 'ngSrc', ()->
+        $elem.addClass('loading')
+        $elem.next().removeClass('hide')
+        return
+
+      $elem.on 'load', _handleLoad
+      scope.$on 'destroy', ()->
+        $elem.off _handleLoad
+      $elem.after(spinnerMarkup)
+      return
+    }
+  ]
+
 .controller 'AppCtrl', [
   '$scope'
   '$rootScope' 

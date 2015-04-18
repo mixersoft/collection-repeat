@@ -9,20 +9,20 @@
       <div class="card-wrap">
         <div class="card camera-roll">
           <div class="item item-divider item-stable, padding-horizontal card-header">
-            <div class="caption capitalize">
-              {{(item.dateTaken | date:'MM/dd/yyyy @ h:mma')}} [H={{item.scaledH}}] {{item.UUID}}
+            <div class="caption capitalize">{{$index}}:
+              {{(item.dateTaken | date:'MM/dd/yyyy@h:mma')}} [H={{item.scaledH}}] {{item.UUID}}
             </div>
           </div>
           <div class="item item-image">
             <div class="photo-wrap">
+
               <img 
               ng-src="{{ watch.fetchSrc(item, $index) }}" 
               ng-class="item.isLoading ? 'invisible' : '' "
-              height="{{item.scaledH}}">
-              <ion-spinner 
-              class="spinner-dark" 
-              ng-show="item.isLoading"
-              ></ion-spinner>
+              height="{{item.scaledH}}"
+              on-photo-load='on.load($event, item, $index)'
+              >
+
             </div>
           </div>
           <div class="item tabs card-footer"

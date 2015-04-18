@@ -7,15 +7,21 @@
     force-refresh-images="true"
     >
       <div class="card-wrap">
-        <div class="card">
+        <div class="card photo">
           <div class="item item-divider item-stable, padding-horizontal card-header">
-            <div class="caption capitalize">
-              {{(item.dateTaken | date:'MM/dd/yyyy @ h:mma')}} [{{item.dim.w}}x{{item.dim.h}}] {{item.UUID}}
+            <div class="caption capitalize">{{$index}}:
+              {{(item.dateTaken | date:'MM/dd/yyyy@h:mma')}} [{{item.dim.w}}x{{item.dim.h}}] {{item.UUID}}
             </div>
           </div>
           <div class="item item-image">
             <div class="photo-wrap">
-              <img ng-src="{{item.src}}">
+              
+              <img 
+              ng-src="{{ on.getSrc(item, $index) }}" 
+              height="{{item.scaledH}}"
+              on-photo-load='on.load($event, item, $index)'
+              >
+
             </div>
           </div>
           <div class="item item-balanced tabs card-footer">

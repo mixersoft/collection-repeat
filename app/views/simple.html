@@ -13,7 +13,11 @@
           </div>
           <div class="item item-image">
             <div class="photo-wrap">
-              <img ng-src="{{item.src}}">
+              <img 
+              ng-src="{{ on.getSrc(item, $index) }}" 
+              height="{{item.scaledH}}"
+              on-photo-load='on.load($event, item, $index)'
+              >
             </div>
           </div>
           <div class="item item-positive tabs card-footer">

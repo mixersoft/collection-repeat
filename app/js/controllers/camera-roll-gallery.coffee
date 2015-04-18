@@ -76,6 +76,7 @@ angular.module('starter')
         console.log "collection-repeat, getHeight() index=%d, height=%d", i, h
         return h
       fetchSrc: (photo, $index)->
+        return if !photo
         src = imageCacheSvc.get(photo.UUID, $scope.watch.targetWidth, $scope.watch.targetType)
         if src
           console.log "cameraRoll, using cached photo, index=%d", $index
@@ -103,6 +104,13 @@ angular.module('starter')
     }
 
     $scope.on = {
+      load: (ev, photo, i)->
+        img = ev.currentTarget
+        if img.naturalHeight > img.naturalWidth
+          angular.element(img.parentNode).addClass( 'portrait' )
+        else 
+          angular.element(img.parentNode).removeClass( 'portrait' )
+        return      
     }
 
     $scope.$on '$ionicView.enter', ()->

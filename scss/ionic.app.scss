@@ -21,6 +21,38 @@ $ionicons-font-path: "../lib/ionic/fonts" !default;
 // Include all of Ionic
 @import "www/lib/ionic/scss/ionic";
 
+// Animation Icons
+// --------------------------
+
+.ion-spin {
+  -webkit-animation: spin 1s infinite linear;
+  -moz-animation: spin 1s infinite linear;
+  -o-animation: spin 1s infinite linear;
+  animation: spin 1s infinite linear;
+}
+
+@-moz-keyframes spin {
+  0% { -moz-transform: rotate(0deg); }
+  100% { -moz-transform: rotate(359deg); }
+}
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(359deg); }
+}
+@-o-keyframes spin {
+  0% { -o-transform: rotate(0deg); }
+  100% { -o-transform: rotate(359deg); }
+}
+@-ms-keyframes spin {
+  0% { -ms-transform: rotate(0deg); }
+  100% { -ms-transform: rotate(359deg); }
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(359deg); }
+}
+
+
 
 ion-content {
   background-color: $dark;
@@ -34,23 +66,39 @@ ion-content {
       font-size: 1.5em;
     }
   }
-  .camera-roll.card {
+
+
+  .card {
     .photo-wrap {
       position: relative;
-      .spinner {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        margin: -18px 0 0 -18px;
-        svg {
-           width:36px;
-           height:36px;
-        }
+      background-color: rgba(0,0,0,0.7);
+      img.loading {
+        visibility: hidden;
       }
       img {
         width: 100%;
       }
     }
   }
+  .card .photo-wrap{
+    .icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      margin: -16px 0 0 -18px;
+      font-size: 36px;
+    }
+    .spinner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      margin: -18px 0 0 -18px;
+      svg {
+         width:36px;
+         height:36px;
+      }
+    }
+  }
+
 }
 
