@@ -1,7 +1,7 @@
 <ion-view view-title="Static H">
   <ion-content delegate-handle="collection-repeat-wrap" class="has-header">
     <div collection-repeat="item in watch.items track by UUID"
-    item-height="342px"
+    item-height="watch.staticHeight"
     item-width="100%"
     >
       <div class="card-wrap">
@@ -16,7 +16,7 @@
               <img 
               ng-src="{{ on.getSrc(item, $index) }}" 
               height="{{item.scaledH}}"
-              on-photo-load='on.load($event, item, $index)'
+              on-img-load'on.load($event, item, $index)'
               >
             </div>
           </div>

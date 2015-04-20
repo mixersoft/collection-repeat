@@ -33,6 +33,7 @@ angular.module('starter')
     $scope.watch = {
       $platform : $platform
       items: []
+      staticHeight: 0
       getHeight: (i)->
         return 0 if i >= this.items.length
         imgH = this.items[i].dim.h
@@ -69,6 +70,7 @@ angular.module('starter')
 
     $scope.$on 'collection-repeat.changed', (ev, items)->
       $scope.watch.items = items
+      $scope.watch.staticHeight = $scope.watch.getHeight(0)
       $ionicScrollDelegate.$getByHandle('collection-repeat-wrap').resize()
       return
 
