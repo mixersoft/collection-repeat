@@ -11,22 +11,24 @@
 angular
 .module('starter', [
   'ionic',
-  # 'ngCordova',
+  'ngCordova',
+  'ngStorage'
   'partials'
   'plugin.cameraRoll'
+  'snappi.util'
+  'parse.backend'
 ])
-
-
-.value '$platform', {}
 
 .config ['$ionicConfigProvider', 
   ($ionicConfigProvider)->
     return
 ]
 .run [
-  '$ionicPlatform', '$platform'
-  ($ionicPlatform, $platform)->
-    window.$platform = $platform
+  '$ionicPlatform', '$rootScope', 'deviceReady', 'PARSE_CREDENTIALS'
+  ($ionicPlatform, $rootScope, deviceReady, PARSE_CREDENTIALS)->
+    Parse.initialize( PARSE_CREDENTIALS.APP_ID, PARSE_CREDENTIALS.JS_KEY )
+    $rootScope.sessionUser = Parse.User.current()
+    window.debug = {}
 
     $ionicPlatform.ready ()->
       # Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
@@ -34,20 +36,9 @@ angular
       cordova.plugins.Keyboard.hideKeyboardAccessoryBar(true) if window.cordova?.plugins.Keyboard
       # org.apache.cordova.statusbar required
       StatusBar.styleDefault() if window.StatusBar?
-      # platform
-      _.extend $platform, _.defaults ionic.Platform.device(), {
-          available: false
-          cordova: false
-          platform: 'browser'
-          uuid: 'browser'
-          isDevice: ionic.Platform.isWebView()
-          isBrowser: ionic.Platform.isWebView() == false
-        }
-      $platform.id = $platform.uuid
-      console.log '$platform', $platform
-
     return
 ]
+
 .config [
   '$stateProvider', 
   '$urlRouterProvider', 
@@ -62,78 +53,70 @@ angular
       controller: 'AppCtrl'
     })
 
-    .state('app.static-h', {
-      url: "/static-h",
+    .state('app.home', {
+      url: "/home",
       views: {
         'menuContent': {
-          templateUrl: "/partials/simple.html"
-          controller: 'GalleryCtrl'
+          templateUrl: "/partials/home.html"
+          controller: 'HomeCtrl'
         }
       }
     })
 
-    .state('app.dynamic-h', {
-      url: "/dynamic-h",
+    .state('app.profile', {
+      url: "/profile",
       views: {
         'menuContent': {
-          templateUrl: "/partials/gallery.html"
-          controller: 'GalleryCtrl'
+          templateUrl: "/partials/profile.html"
+          controller: 'UserCtrl'
         }
       }
     })
 
-    .state('app.camera-roll', {
-      url: "/camera-roll/:size/:type",
-      views: {
-        'menuContent': {
-          templateUrl: "/partials/camera-roll-gallery.html"
-          controller: 'CameraRollGalleryCtrl'
-        }
-      }
+    .state('app.profile.sign-in', {
+      url: "/sign-in",
+      # views: {
+      #   'menuContent': {
+      #     templateUrl: "/partials/templates/sign-in.html"
+      #     controller: 'UserCtrl'
+      #   }
+      # }
     })
-
 
 
     # // if none of the above states are matched, use this as the fallback
-    $urlRouterProvider.otherwise('/app/dynamic-h');
+    $urlRouterProvider.otherwise('/app/home');
 ]
-
-.directive 'onPhotoLoad', ['$parse' , ($parse)->
-  spinnerMarkup = '<i class="icon ion-load-c ion-spin light"></i>'
-  _handleLoad = (ev, photo, index)->
-    $elem = angular.element(ev.currentTarget)
-    $elem.removeClass('loading')
-    $elem.next().addClass('hide')
-    fn = $parse(attrs.onPhotoLoad)
-    scope.$apply ()->
-      fn scope, {$event: ev}
-      return
-    return
-
-  return {
-    restrict: 'A'
-    link: (scope, $elem, attrs)->
-      
-
-      # NOTE: using collection-repeat="item in items"
-      attrs.$observe 'ngSrc', ()->
-        $elem.addClass('loading')
-        $elem.next().removeClass('hide')
-        return
-
-      $elem.on 'load', _handleLoad
-      scope.$on 'destroy', ()->
-        $elem.off _handleLoad
-      $elem.after(spinnerMarkup)
-      return
-    }
-  ]
 
 .controller 'AppCtrl', [
   '$scope'
-  '$rootScope' 
+  '$rootScope' , '$state'
   '$timeout'
-  '$ionicPlatform'
-  ($scope, $rootScope, $timeout, $ionicPlatform)->
+  'deviceReady'
+  '$localStorage'
+  ($scope, $rootScope, $state, $timeout, deviceReady, $localStorage)->
+    $scope.deviceReady = deviceReady
+
+    _.extend $rootScope, {
+      $state : $state
+      user : $rootScope.sessionUser?.toJSON() || {}
+      device : null # deviceReady.device(platform)
+    }
+
+    window.debug['$platform'] = $rootScope.localStorage = $localStorage
+    if $rootScope.localStorage['device']?
+      platform = $rootScope.localStorage['device']
+      window.debug['$platform'] = $rootScope['device'] = deviceReady.device(platform)
+      console.log 'localStorage $platform', window.debug['$platform']
+    else       
+      # platform
+      deviceReady.waitP().then (platform)->
+        window.debug['$platform'] = $rootScope['device'] = $rootScope.localStorage['device'] = platform
+        console.log 'deviceReady $platform', window.debug['$platform']
+
+    window.debug['ls'] = $localStorage
+
     return
+
+
   ]

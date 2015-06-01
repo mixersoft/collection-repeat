@@ -52,9 +52,43 @@ $ionicons-font-path: "../lib/ionic/fonts" !default;
   100% { transform: rotate(359deg); }
 }
 
+.capitalize {
+  text-transform: capitalize;
+}
+.pull-right {
+  float: right;
+}
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.cursor-default {
+  cursor: default;
+}
+
+a.no-decoration {
+  text-decoration: none !important;
+  color:inherit;
+  &:hover, &:visited {
+    text-decoration: none !important;
+  }
+}
+
+.menu-left {
+  ion-list ion-item > *  {
+    @extend .cursor-pointer;
+  }
+}
+
+.header-card .item.item-divider .icon-large {
+  font-size: 1.8em;
+  height: 16px;
+  vertical-align: text-top;
+  margin-top: -4px;
+}
 
 
-ion-content {
+ion-content.gallery {
   background-color: $dark;
 }
 

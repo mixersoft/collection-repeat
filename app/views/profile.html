@@ -1,0 +1,93 @@
+<ion-view view-title="Profile" id="profile">
+  <ion-content id="settings" class="has-header" ng-switch="watch.viewName()">
+
+<div ng-switch-when="sign-in"> 
+  <div ng-include="'/partials/templates/sign-in.html'"></div> 
+</div>  
+<div ng-switch-when="anonymous"> 
+    <div ng-include="'/partials/templates/anonymous-signup.html'"></div> 
+
+    <!-- header card : guest -->
+    <div class="list card header-card">
+      <div class="item item-divider item-energized">
+        <span class="cursor-default">
+          <i class="icon ion-person icon-large"></i>&nbsp; Sign Up
+        </span>
+        <span class="pull-right cursor-pointer"
+        ng-click="on.signOut($event)"
+        > Sign In &nbsp;<i class="icon ion-log-in icon-large"></i>
+        </span>
+      </div>
+
+      <form name="form" class="css-form" novalidate>
+        <div ng-include src="'/partials/templates/anonymous-signup-fields.html'"></div>
+
+        
+        <div class="padding">
+          <input type="submit" class="button button-block button-energized" 
+            value="Submit"
+            ng-class="appProfile.ngClassSubmit()"
+            ng-click="on.submit($event)"
+            >
+          </input>
+        </div>  
+      </form> 
+
+      <div class="item item-divider item-energized">
+      </div>          
+        
+    </div>
+</div>    
+
+<div ng-switch-when="registered">
+    <div class="padding">
+      <p class="text-center"><span class="username badge badge-positive capitalize padding"><i class="icon ion-person"></i>&nbsp; {{appProfile.userModel().username}}</span></p>
+      <p>Hello <span class="capitalize">{{appProfile.userModel().username}}</span>. You can manage your account information below.</p>
+    </div>
+    <!-- header card : named user  -->
+    <div class="list card header-card" >
+      <div class="item item-divider item-energized">
+        <span class="cursor-default">
+          <i class="icon ion-person icon-large"></i>&nbsp; {{appProfile.userModel().username}} 
+        </span>
+        <span class="pull-right cursor-pointer"
+        ng-click="on.signOut($event)"
+        > Sign Out <i class="icon ion-log-in icon-large"></i>
+        </span>
+      </div>
+
+      <form name="form" class="css-form" novalidate>
+        <div ng-include src="'/partials/templates/anonymous-signup-fields.html'"></div>
+
+        <!-- // anonymous only -->
+        <div class="item item-text-wrap item-icon-left padding">
+          <button class="button button-block button-assertive" 
+          ng-if="!appProfile.isAnonymous()"
+          ng-show="!appProfile.email.dirty() && !appProfile.userModel().emailVerified"
+          ui-sref="app.profile">
+          Verify Email
+          </button>
+
+          <input type="submit" class="button button-block button-energized"  tabindex="10"
+            value="Submit"
+            ng-class="appProfile.ngClassEmailIcon()"
+            ng-click="on.submit($event)"
+            >
+          </input>  
+        </div> 
+      </form> 
+
+      <div class="item item-divider item-energized">
+      </div>  
+
+    </div>
+</div>
+
+
+
+  </ion-content>
+</ion-view>
+
+
+
+

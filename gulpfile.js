@@ -40,6 +40,11 @@ gulp.task('coffee', function(done) {
   .on('end', done)
 })
 
+gulp.task('copy:more', function(){
+  gulp.src('./app/index.html')
+    .pipe(gulp.dest('./www/'));
+})
+
 gulp.src(paths.views)
     .pipe(minifyHtml({
         empty: true,
